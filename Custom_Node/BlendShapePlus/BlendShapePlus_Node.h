@@ -23,6 +23,11 @@
 #include <maya/MFnTypedAttribute.h>
 #include <maya/MFnCompoundAttribute.h>
 
+#include <stdio.h>
+#include <math.h>
+#include <map>
+#include <omp.h>
+
 
 // =================================================================
 //	Init Class BlendShape Plus
@@ -32,28 +37,29 @@ class BlendShapePlus_Node : public MPxDeformerNode {
 	public:
 
 		BlendShapePlus_Node();
-		virtual						~BlendShapePlus_Node();
+		virtual							~BlendShapePlus_Node();
 
-		static void*				creator();
-		static MStatus				initialize();
+		static void*					creator();
+		static MStatus					initialize();
 
-		virtual MStatus				deform(
-											MDataBlock& data, MItGeometry& itGeo,
-											const MMatrix &localToWorldMatrix,
-											unsigned int mIndex
-											);
+		virtual MStatus					deform(
+												MDataBlock& data, MItGeometry& itGeo,
+												const MMatrix &localToWorldMatrix,
+												unsigned int mIndex
+												);
 
-		virtual MStatus				connectionMade(const MPlug& plug, const MPlug& otherPlug, bool asSrc);
-		virtual MStatus				connectionBroken(const MPlug& plug, const MPlug& otherPlug, bool asSrc);
+		virtual MStatus					connectionMade(const MPlug& plug, const MPlug& otherPlug, bool asSrc);
+		virtual MStatus					connectionBroken(const MPlug& plug, const MPlug& otherPlug, bool asSrc);
 
 
 	public:
 
-		static MTypeId				id;
-		static MObject				aSpace;
-		static MObject				aTargetGeoCompound;
-		static MObject				aTargetMesh;
-		static MObject				atargetWeight;
+		static MTypeId					id;
+		static MObject					aSpace;
+		static MObject					aTargetGeoCompound;
+		static MObject					aTargetMesh;
+		static MObject					atargetWeight;
+		static MObject					atargetWeightMap;
 
 };
 

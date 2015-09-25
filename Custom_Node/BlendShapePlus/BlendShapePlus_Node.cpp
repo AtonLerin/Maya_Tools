@@ -15,6 +15,7 @@ MObject BlendShapePlus_Node::aSpace;
 MObject BlendShapePlus_Node::aTargetGeoCompound;
 MObject BlendShapePlus_Node::aTargetMesh;
 MObject BlendShapePlus_Node::atargetWeight;
+MObject BlendShapePlus_Node::atargetWeightMap;
 
 
 // =================================================================
@@ -41,11 +42,11 @@ MStatus BlendShapePlus_Node::initialize() {
 	MFnEnumAttribute spaceAttr;
 	aSpace = spaceAttr.create("space", "sp", 0, &status);
 	CHECK_MSTATUS_AND_RETURN_IT(status);
-	CHECK_MSTATUS(spaceAttr.setReadable(true));
-	CHECK_MSTATUS(spaceAttr.setWritable(true));
-	CHECK_MSTATUS(spaceAttr.setKeyable(true));
-	CHECK_MSTATUS(spaceAttr.setStorable(true));
-	CHECK_MSTATUS(spaceAttr.setConnectable(true));
+	CHECK_MSTATUS_AND_RETURN_IT(spaceAttr.setReadable(true));
+	CHECK_MSTATUS_AND_RETURN_IT(spaceAttr.setWritable(true));
+	CHECK_MSTATUS_AND_RETURN_IT(spaceAttr.setKeyable(true));
+	CHECK_MSTATUS_AND_RETURN_IT(spaceAttr.setStorable(true));
+	CHECK_MSTATUS_AND_RETURN_IT(spaceAttr.setConnectable(true));
 	spaceAttr.addField("world", 0);
 	spaceAttr.addField("object", 1);
 
@@ -53,55 +54,68 @@ MStatus BlendShapePlus_Node::initialize() {
 	MFnCompoundAttribute targetGeoCompoundAttr;
 	aTargetGeoCompound = targetGeoCompoundAttr.create("inputTargetGroup", "itg", &status);
 	CHECK_MSTATUS_AND_RETURN_IT(status);
-	CHECK_MSTATUS(targetGeoCompoundAttr.setReadable(true));
-	CHECK_MSTATUS(targetGeoCompoundAttr.setWritable(true));
-	CHECK_MSTATUS(targetGeoCompoundAttr.setKeyable(true));
-	CHECK_MSTATUS(targetGeoCompoundAttr.setStorable(true));
-	CHECK_MSTATUS(targetGeoCompoundAttr.setConnectable(true));
+	CHECK_MSTATUS_AND_RETURN_IT(targetGeoCompoundAttr.setReadable(true));
+	CHECK_MSTATUS_AND_RETURN_IT(targetGeoCompoundAttr.setWritable(true));
+	CHECK_MSTATUS_AND_RETURN_IT(targetGeoCompoundAttr.setKeyable(true));
+	CHECK_MSTATUS_AND_RETURN_IT(targetGeoCompoundAttr.setStorable(true));
+	CHECK_MSTATUS_AND_RETURN_IT(targetGeoCompoundAttr.setConnectable(true));
 	targetGeoCompoundAttr.setArray(true);
-	targetGeoCompoundAttr.setIndexMatters(true);
+	targetGeoCompoundAttr.setUsesArrayDataBuilder(true);
 
 
 	//	Add inputGeo and set in compound
 	MFnTypedAttribute	targetMeshAttr;
 	aTargetMesh = targetMeshAttr.create("targetMesh", "im", MFnData::kMesh, &status);
 	CHECK_MSTATUS_AND_RETURN_IT(status);
-	CHECK_MSTATUS(targetMeshAttr.setReadable(true));
-	CHECK_MSTATUS(targetMeshAttr.setWritable(true));
-	CHECK_MSTATUS(targetMeshAttr.setKeyable(false));
-	CHECK_MSTATUS(targetMeshAttr.setStorable(false));
-	CHECK_MSTATUS(targetMeshAttr.setConnectable(true));
+	CHECK_MSTATUS_AND_RETURN_IT(targetMeshAttr.setReadable(true));
+	CHECK_MSTATUS_AND_RETURN_IT(targetMeshAttr.setWritable(true));
+	CHECK_MSTATUS_AND_RETURN_IT(targetMeshAttr.setKeyable(false));
+	CHECK_MSTATUS_AND_RETURN_IT(targetMeshAttr.setStorable(false));
+	CHECK_MSTATUS_AND_RETURN_IT(targetMeshAttr.setConnectable(true));
 	targetGeoCompoundAttr.addChild(aTargetMesh);
 
 	
 	//	Add inputWeight and set in compound
 	MFnNumericAttribute targetWeightAttr;
-	atargetWeight = targetWeightAttr.create("inputWeight", "iw", MFnNumericData::kFloat, 0.0f, &status);
+	atargetWeight = targetWeightAttr.create("targetWeight", "tw", MFnNumericData::kFloat, 1.0f, &status);
 	CHECK_MSTATUS_AND_RETURN_IT(status);
-	CHECK_MSTATUS(targetWeightAttr.setReadable(true));
-	CHECK_MSTATUS(targetWeightAttr.setWritable(true));
-	CHECK_MSTATUS(targetWeightAttr.setKeyable(true));
-	CHECK_MSTATUS(targetWeightAttr.setStorable(true));
-	CHECK_MSTATUS(targetWeightAttr.setConnectable(true));
+	CHECK_MSTATUS_AND_RETURN_IT(targetWeightAttr.setReadable(true));
+	CHECK_MSTATUS_AND_RETURN_IT(targetWeightAttr.setWritable(true));
+	CHECK_MSTATUS_AND_RETURN_IT(targetWeightAttr.setKeyable(true));
+	CHECK_MSTATUS_AND_RETURN_IT(targetWeightAttr.setStorable(true));
+	CHECK_MSTATUS_AND_RETURN_IT(targetWeightAttr.setConnectable(true));
 	targetGeoCompoundAttr.addChild(atargetWeight);
+
+
+	//	Add inputWeight and set in compound
+	MFnNumericAttribute targetWeightMapAttr;
+	atargetWeightMap = targetWeightMapAttr.create("weightMap", "twm", MFnNumericData::kFloat, 1.0f, &status);
+	CHECK_MSTATUS_AND_RETURN_IT(status);
+	CHECK_MSTATUS_AND_RETURN_IT(targetWeightMapAttr.setReadable(true));
+	CHECK_MSTATUS_AND_RETURN_IT(targetWeightMapAttr.setWritable(true));
+	CHECK_MSTATUS_AND_RETURN_IT(targetWeightMapAttr.setKeyable(true));
+	CHECK_MSTATUS_AND_RETURN_IT(targetWeightMapAttr.setStorable(true));
+	CHECK_MSTATUS_AND_RETURN_IT(targetWeightMapAttr.setConnectable(true));
+	targetWeightMapAttr.setArray(true);
+	targetGeoCompoundAttr.addChild(atargetWeightMap);
 
 
 	//	Add Attributes to node
 	addAttribute(aSpace);
 	addAttribute(aTargetGeoCompound);
 	addAttribute(aTargetMesh);
-	addAttribute(atargetWeight);
+	addAttribute(atargetWeightMap);
 
 
 	//	Attributes Affects
 	attributeAffects(aSpace, outputGeom);
 	attributeAffects(aTargetGeoCompound, outputGeom);
 	attributeAffects(aTargetMesh, outputGeom);
-	attributeAffects(atargetWeight, outputGeom);
+	attributeAffects(atargetWeightMap, outputGeom);
 	
 
 	// Make the deformer weights paintable
-	MGlobal::executeCommand("makePaintable -attrType multiFloat -sm deformer blendNode weights;");
+	MGlobal::executeCommand("makePaintable -attrType multiFloat -sm deformer BlendShapePlus weightMap;");
 
 	return MS::kSuccess;
 
@@ -117,7 +131,7 @@ MStatus BlendShapePlus_Node::connectionMade(const MPlug& plug, const MPlug& othe
 	if (plug == aTargetMesh) {
 		MStatus	status;
 		MPlug	sGroup = plug.parent(&status);
-		CHECK_MSTATUS(status);
+		CHECK_MSTATUS_AND_RETURN_IT(status);
 		int	index = sGroup.logicalIndex();
 		// My function
 	}
@@ -130,7 +144,7 @@ MStatus BlendShapePlus_Node::connectionBroken(const MPlug& plug, const MPlug& ot
 	if (plug == aTargetMesh) {
 		MStatus	status;
 		MPlug	sGroup = plug.parent(&status);
-		CHECK_MSTATUS(status);
+		CHECK_MSTATUS_AND_RETURN_IT(status);
 		int	index = sGroup.logicalIndex();
 		// My function
 	}
@@ -148,61 +162,56 @@ MStatus BlendShapePlus_Node::deform(
 									MDataBlock& data,
 									MItGeometry& itGeo,
 									const MMatrix &localToWorldMatrix,
-									unsigned int mIndex
+									unsigned int geomIndex
 									) {
 	
 	MStatus status;
 
-	//	Get Enveloppe data
+	//	Get All positions
+	MPointArray	inputPoints;
+	itGeo.allPositions(inputPoints);
+
+	MPointArray finalPoints = inputPoints;
+
+	//	Get env data
 	float env = data.inputValue(envelope).asFloat();
 
-	//	Get Input data
+	//	Input Array data
 	MArrayDataHandle targetArray = data.inputArrayValue(aTargetGeoCompound);
-	int targetArrayCount = targetArray.elementCount();
+	int targetArrayCount = targetArray.elementCount() - 1;
 
-	for (int idx = 0; idx < targetArrayCount; idx++){
+	// =============================================================
+	//	Get New Points Position
+	// =============================================================
+	for (int idx = 0; idx < (int)targetArrayCount; idx++){
 		
 		targetArray.jumpToElement(idx);
-		MDataHandle targetElement = targetArray.inputValue();
+		MDataHandle		targetElement = targetArray.inputValue();
 		
 		//	Get Weight
-		float targetWeight = targetElement.child(atargetWeight).asFloat();
-		targetWeight *= env;
+		// MFloatArray		weightMap = targetElement.child(atargetWeightMap).asFloat();
+		float			weight = targetElement.child(atargetWeight).asFloat();
 
 		//	Get Mesh
 		MObject targetMesh = targetElement.child(aTargetMesh).asMesh();
+		MFnMesh mfnTargetMesh(targetMesh);
 
-		MFnMesh mfnTargetMesh(targetMesh, &status);
-		CHECK_MSTATUS_AND_RETURN_IT(status);
-		if (targetMesh.isNull())
-			return MS::kSuccess;
-
-		// Get the blend points
 		MPointArray targetPoints;
 		mfnTargetMesh.getPoints(targetPoints);
 
-		MPoint pt;
-		MPoint vPos;
-		float w = 0.0f;
+		MString s("\nHODOR ");
 
-		for (; !itGeo.isDone(); itGeo.next()) {
+		if (inputPoints.length() != targetPoints.length())
+			return MS::kSuccess;
 
-			// Get the input point
-			pt = itGeo.position();
-
-			// Get the painted weight value
-			w = weightValue(data, mIndex, itGeo.index());
-
-			// Perform the deformation
-			pt = pt + (targetPoints[itGeo.index()] - pt) * targetWeight * w;
-
-			// Set the new output point
-			itGeo.setPosition(pt);
-
+		for (int i = 0; i < (int)inputPoints.length(); i++) {
+			finalPoints[i] += (targetPoints[i] - inputPoints[i]) * weight * env;
 		}
 
 	}
 
-	return MS::kSuccess;
+	itGeo.setAllPositions(finalPoints);
+
+	return status;
 
 }
