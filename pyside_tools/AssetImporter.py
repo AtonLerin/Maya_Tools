@@ -5,17 +5,24 @@
 # # extension_accepted = ['.ma', '.mb', '.fbx', '.obj'] in line 458
 # #
 # # This tools surch all scenes folder in yout path
+# # give name of your asset in text field and press down arrow for go to the list
+# # ESC to return in text field. ESC again for exit ui
+# # F1 on asset for load
+# # F2 on asset for import in reference
+# # F3 on asset for import in scene with no namespace
 
-# p = 'Your script path'
+# p = r'I:\Work\Maya'
 # sys.path.insert(0, p)
-#
+
 # import AssetImporter
 # reload(AssetImporter)
-#
+
 # from AssetImporter import AssetImporter
-#
-# AssetImporter.set_path(['D:/Work/scenes/', 'D:/HODOR/CHARACTER', ...])
-#
+
+# AssetImporter.set_path([r'D:\CHARACTER',])
+# AssetImporter.set_icon_path(r'I:\Work\Maya\icons')
+# AssetImporter.set_extension_accepted(['.ma', '.mb', '.fbx', '.obj'])
+
 # cao_window = AssetImporter()
 # cao_window.show()
 
@@ -34,7 +41,7 @@ from ctypes import Structure, c_ulong
 
 
 
-ICON_PATH = 'Your icon Path'
+
 
 
 
@@ -84,8 +91,10 @@ class AssetImporter(QtGui.QWidget):
 
     #       Class Variables
     PATH = [] # exemple : ['D:/Work/scenes/', 'D:/BASE/CHARACTER']
+    ICON_PATH = ''
     FILES_ALL = []
     FILES_SURCH = []
+    EXTENSION_ACCEPTED = ['.ma', '.mb', '.fbx', '.obj']
 
 
     # =====================================================
@@ -214,8 +223,20 @@ class AssetImporter(QtGui.QWidget):
         cls.PATH = path
 
     @classmethod
+    def set_icon_path(cls, path):
+        cls.ICON_PATH = path
+
+    @classmethod
     def get_path(cls):
         return cls.PATH
+
+    @classmethod
+    def set_extension_accepted(cls, extensions):
+
+        if isinstance(extensions, basestring):
+            extensions = [extensions]
+
+        cls.EXTENSION_ACCEPTED = extensions
 
 
 
@@ -294,22 +315,24 @@ class AssetImporter(QtGui.QWidget):
             item = self.model.itemFromIndex(index).row()
             filePath = self.FILES_SURCH[item]
 
+            fPath, fName, fExt = self.pathSplit(filePath)
+
             if key == key_value['F1']:
+
                 pmc.newFile(force=True)
                 pmc.system.openFile(filePath, force=True)
 
-                pmc.workspace(path, o=True)
-                pmc.workspace(dir=path)
+                pmc.workspace(fPath, o=True)
+                pmc.workspace(dir=fPath)
 
 
             if key == key_value['F2']:
-                path, fileName = os.path.split(filePath)
-                ns = fileName.split('.')[0]
 
-                pmc.createReference(filePath, namespace=ns)
+                pmc.createReference(filePath, namespace=fName.upper())
 
 
             if key == key_value['F3']:
+
                 pmc.importFile(filePath)
 
 
@@ -376,7 +399,9 @@ class AssetImporter(QtGui.QWidget):
                 elif '.fbx' in fileName:
                     iconName = 'obj.png'
 
-                icon = QtGui.QIcon(os.path.join(icons_path.ICON_PATH, iconName))
+                icon = QtGui.QIcon()
+                if os.path.exists(self.ICON_PATH):
+                    icon = QtGui.QIcon(os.path.join(self.ICON_PATH, iconName))
 
 
                 standardItem = QtGui.QStandardItem(icon, fileName)
@@ -457,13 +482,24 @@ class AssetImporter(QtGui.QWidget):
                 pathItem = os.path.join(p, item)
                 if not [x for x in ['.swatches', '.mayaSwatches'] if x in pathItem]:
                     if os.path.isfile(pathItem):
-                        extension_accepted = ['.ma', '.mb', '.fbx', '.obj']
-                        if [ext for ext in extension_accepted if ext in pathItem]:
+                        if [ext for ext in self.EXTENSION_ACCEPTED if ext in pathItem]:
                             self.FILES_ALL.append(pathItem)
 
 
                     if os.path.isdir(pathItem):
                         self.get_files(path=[pathItem])
+
+
+    # =====================================================
+    #   Path Split
+    # =====================================================
+    @classmethod
+    def pathSplit(cls, file_path):
+
+        file_path, fileFullName = os.path.split(file_path)
+        fileName, fileExtension = os.path.splitext(fileFullName)
+
+        return os.path.normpath(file_path), fileName, fileExtension
 
 
 
