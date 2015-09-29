@@ -1,3 +1,37 @@
+# #
+# # This plugin reload your tool without exit maya
+# #
+# # If we use my asset import it's possible make a few time for launch (if you have a lot asset)
+# # With this tool it's possible to don't erase assetImporter module when you reload your tool
+# # If you wan't to reload assetImporter module don't make this in exception module
+# # If assetImport is reload surchAsset restart when you call assetImporter
+# #
+# # The Module name is a last dir name of yout path
+# # For exemple in r'D:\work\maya_tools\hodor\' your module is hodor
+# #
+
+# p = 'Your script path'
+# sys.path.insert(0, p)
+
+# import plugin_manager
+# reload(plugin_manager)
+
+# from plugin_manager import Plugin_Manager
+
+
+# ScriptsPath = 'Yout scripts path'
+# OtherScriptsPath = 'other scripts path ?'
+
+# Plugin_Manager.window_close_all_pyside()      # Close just QMainWindow. If you close QWidget Window maya crash
+# Plugin_Manager.modules_delete(
+#     ['Tools', 'reTools'],                     # Delet Module
+#     ['plugin_manager', 'AssetImporter']       # Exception module, if you delete plugin_manager module this script don't work
+# )
+
+# Plugin_Manager.modules_load([ScriptsPath, OtherScriptsPath])
+
+
+
 #-----------------------------------------------------------------------------------
 #   Import Modules
 #-----------------------------------------------------------------------------------

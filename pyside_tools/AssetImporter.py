@@ -1,13 +1,23 @@
+# # Put this script in the maya hotkey
+# # My input for launch this tool is Ctrl+&
+# # 
+# # it's easy to add file extension
+# # extension_accepted = ['.ma', '.mb', '.fbx', '.obj'] in line 458
+# #
+# # This tools surch all scenes folder in yout path
+
 # p = 'Your script path'
 # sys.path.insert(0, p)
-
+#
 # import AssetImporter
 # reload(AssetImporter)
-
+#
 # from AssetImporter import AssetImporter
+#
+# AssetImporter.set_path(['D:/Work/scenes/', 'D:/HODOR/CHARACTER', ...])
+#
 # cao_window = AssetImporter()
 # cao_window.show()
-
 
 
 # =========================================================
