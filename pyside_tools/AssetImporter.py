@@ -1,13 +1,55 @@
-#----------------------------------------------------------------------
-#           Import Module
-#----------------------------------------------------------------------
-import os
+# p = 'Your script path'
+# sys.path.insert(0, p)
 
+# import AssetImporter
+# reload(AssetImporter)
+
+# from AssetImporter import AssetImporter
+# cao_window = AssetImporter()
+# cao_window.show()
+
+
+
+# =========================================================
+#   Import Module
+# =========================================================
+import os
 import pymel.core as pmc
+
 from PySide import QtGui, QtCore
 
-import path as icons_path
-from qdTools.RDE_Tools.divers_tools.mouse_tools import Mouse_Tools
+from ctypes import Structure, c_ulong
+
+
+
+
+
+ICON_PATH = 'Your icon Path'
+
+
+
+# =========================================================
+#   Mouse Tool
+# =========================================================
+
+
+
+class Mouse_Position(Structure):
+    _fields_ = [("x", c_ulong), ("y", c_ulong)]
+
+
+#    Mouse Tools
+class Mouse_Tools():
+    
+    @classmethod
+    def mouse_position(cls):
+        
+        from ctypes import windll, byref
+
+        position = Mouse_Position()
+        windll.user32.GetCursorPos(byref(position))
+
+        return { "x": position.x, "y": position.y}
 
 
 
@@ -21,35 +63,30 @@ from qdTools.RDE_Tools.divers_tools.mouse_tools import Mouse_Tools
 
 
 
-#----------------------------------------------------------------------
-#           Script Launcher
-#----------------------------------------------------------------------
-from qdTools.RDE_Tools.divers_tools import decorator
-from qdTools.RDE_Tools.ui_tools import uielement
+# =========================================================
+#    Asset Importer
+# =========================================================
+
 
 
 class AssetImporter(QtGui.QWidget):
     
 
-    #------------------------------------------------------------------
     #       Class Variables
-    #------------------------------------------------------------------
-    PATH = [] # 'D:/Work/scenes/', 'D:/BASE/PDA/DESTINATION/GRAPH/CHARACTER'
+    PATH = [] # exemple : ['D:/Work/scenes/', 'D:/BASE/CHARACTER']
     FILES_ALL = []
     FILES_SURCH = []
 
 
-    #------------------------------------------------------------------
+    # =====================================================
     #       Init Window
-    #------------------------------------------------------------------
-    @decorator.giveTime
-    def __init__(self, **kwargs):
-
+    # =====================================================
+    def __init__(self, parent=None):
+        super(AssetImporter, self).__init__(parent)
 
         #   Variables
-        self.wWidth = kwargs.get('width', 410.0)
-        self.wHeight = kwargs.get('height', 50.0)
-        parent = kwargs.get('parent', None)
+        self.width = 410.0
+        self.height = 50.0
 
         mousePosition = Mouse_Tools.mouse_position()
         self.posX = mousePosition['x']-250.0
@@ -59,51 +96,46 @@ class AssetImporter(QtGui.QWidget):
 
 
         #   Set Window
-        super(AssetImporter, self).__init__(parent)
-
         self.setWindowFlags(QtCore.Qt.FramelessWindowHint)
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
-        self.resize(self.wWidth, self.wHeight)
+        self.resize(self.width, self.height)
         self.move(self.posX, self.posY)
         
-        self.setWindowTitle("Scrip Launcher")
+        self.setWindowTitle("Asset Importer")
 
         self.setStyleSheet(
             "border-width: 0px; border-style: solid;"
             "border-radius: 5px;"
         )
 
-
-
-
-
         #   Widget
-        self.gridContainer = QtGui.QVBoxLayout()
-        self.surchWidget = QtGui.QWidget()
-        self.treeWidget = QtGui.QWidget()
-        self.treeWidget.setContentsMargins(152, 2, 0, 0)
+        container = QtGui.QVBoxLayout()
 
+        surchWidget = QtGui.QWidget()
 
-        self.gridContainer.addWidget(self.surchWidget)
-        self.gridContainer.addWidget(self.treeWidget)
-        self.gridContainer.addStretch(1)
-        self.setLayout(self.gridContainer)
+        treeWidget = QtGui.QWidget()
+        treeWidget.setContentsMargins(152, 2, 0, 0)
+
+        container.addWidget(surchWidget)
+        container.addWidget(treeWidget)
+        container.addStretch(1)
+        self.setLayout(container)
 
 
         #   Surch Layout
         surchLayout = QtGui.QHBoxLayout()
         surchLayout.setContentsMargins(0,0,0,0)
-        self.surchWidget.setLayout(surchLayout)
+        surchWidget.setLayout(surchLayout)
 
 
         #   LineEdit
-        self.TX_label = uielement.UiElement.textField(
+        self.TX_label = UiElement.textField(
             parent=surchLayout,
             labelName=['Asset that you want ?'],
             widthHeight=[(140, 200, 30)],
             margin=(5, 0, 0, 0),
-            )
+        )
 
         self.TX_label[0].setText('')
 
@@ -112,11 +144,11 @@ class AssetImporter(QtGui.QWidget):
 
 
         #   Button
-        self.BU_Layout = uielement.UiElement.button(
+        self.BU_Layout = UiElement.button(
             parent=surchLayout,
             labelName=[''],
             widthHeight=[(20, 20)],
-            icons=[os.path.join(icons_path.ICON_PATH, 'window_close.png')],
+            icons=[os.path.join(ICON_PATH, 'window_close.png')],
             margin=(0, 0, 0, 0),
         )
 
@@ -131,7 +163,7 @@ class AssetImporter(QtGui.QWidget):
         #   Tree Layout
         treeLayout = QtGui.QVBoxLayout()
         treeLayout.setContentsMargins(0,0,0,0)
-        self.treeWidget.setLayout(treeLayout)
+        treeWidget.setLayout(treeLayout)
 
 
         #   Tree View
@@ -148,7 +180,7 @@ class AssetImporter(QtGui.QWidget):
         self.view.setStyleSheet(
             "background-color: rgba(40, 40, 40, 50);"
             "border-radius: 0px;"
-            )
+        )
 
 
 
@@ -164,9 +196,9 @@ class AssetImporter(QtGui.QWidget):
 
 
 
-    #------------------------------------------------------------------
+    # =====================================================
     #   Set  or Get Path Variables
-    #------------------------------------------------------------------
+    # =====================================================
     @classmethod
     def set_path(cls, path):
         cls.PATH = path
@@ -183,9 +215,9 @@ class AssetImporter(QtGui.QWidget):
 
 
 
-    #------------------------------------------------------------------
+    # =====================================================
     #   Build Rectangle
-    #------------------------------------------------------------------
+    # =====================================================
     def paintEvent(self, event):
         
         painter = QtGui.QPainter(self)
@@ -194,19 +226,19 @@ class AssetImporter(QtGui.QWidget):
         painter.setPen(QtCore.Qt.NoPen)
         
         painter.setBrush(QtGui.QBrush(QtGui.QColor.fromRgbF(.1, .1, .1, .8)))
-        painter.drawRoundedRect(0, 0, self.wWidth, self.wHeight, 20.0, 20.0)
+        painter.drawRoundedRect(0, 0, self.width, self.height, 20.0, 20.0)
 
 
-    #------------------------------------------------------------------
+    # =====================================================
     #   On Press
-    #------------------------------------------------------------------
+    # =====================================================
     def mousePressEvent(self, event):
         self.offset = event.pos()
 
 
-    #------------------------------------------------------------------
+    # =====================================================
     #   On Move
-    #------------------------------------------------------------------
+    # =====================================================
     def mouseMoveEvent(self, event):
 
         x = event.globalX()
@@ -217,9 +249,9 @@ class AssetImporter(QtGui.QWidget):
         self.move(x - x_w, y - y_w)
 
 
-    #------------------------------------------------------------------
+    # =====================================================
     #   Key Event
-    #------------------------------------------------------------------
+    # =====================================================
     def keyPressEvent(self, event):
 
         #   Variables
@@ -237,6 +269,7 @@ class AssetImporter(QtGui.QWidget):
 
         #   if echap is pressed
         if key == QtCore.Qt.Key_Escape:
+
             if self.treeFocus is True:
                 self.treeFocus = False
                 self.TX_label[0].setFocus()
@@ -304,9 +337,9 @@ class AssetImporter(QtGui.QWidget):
 
 
 
-    #------------------------------------------------------------------
+    # =====================================================
     #   If text change
-    #------------------------------------------------------------------
+    # =====================================================
     def textChanged_Action(self):
 
         #----- Variables
@@ -364,9 +397,9 @@ class AssetImporter(QtGui.QWidget):
 
 
 
-    #------------------------------------------------------------------
+    # =====================================================
     #   If return is pressed
-    #------------------------------------------------------------------
+    # =====================================================
     def returnPressed_Action(self):
 
         self.view.setFocus()
@@ -377,9 +410,9 @@ class AssetImporter(QtGui.QWidget):
         self.treeFocus = True
 
 
-    #------------------------------------------------------------------
+    # =====================================================
     #   Close Window
-    #------------------------------------------------------------------
+    # =====================================================
     def closeWindow_Action(self):
 
         self.close()
@@ -392,9 +425,9 @@ class AssetImporter(QtGui.QWidget):
 
 
 
-    #------------------------------------------------------------------
+    # =====================================================
     #   get_scripts
-    #------------------------------------------------------------------
+    # =====================================================
     def get_files(self, path=None):
     
         self.__items = []
@@ -402,6 +435,8 @@ class AssetImporter(QtGui.QWidget):
 
         for p in path:
 
+            if not os.path.exists(p):
+                continue
 
             for fileName in os.listdir(p):
                 self.__items.append(fileName)
@@ -428,11 +463,167 @@ class AssetImporter(QtGui.QWidget):
 
 
 
-'''
-from qdToolsWip.pyside_tools.AssetImporter import AssetImporter
+# =========================================================
+#    PySide Tools
+# =========================================================
 
-AssetImporter.set_path(['D:/Work/scenes/', 'D:/BASE/PDA/DESTINATION/GRAPH/CHARACTER'])
 
-MyScriptLauncher = AssetImporter()
-MyScriptLauncher.show()
-'''
+
+class Button(QtGui.QPushButton):
+
+    custom_context_menu = None
+
+    def __init__(self):
+        super(Button, self).__init__()
+
+        self.custom_context_menu = None
+
+
+    def contextMenuEvent(self, event):
+
+        if self.custom_context_menu is not None:
+            self.custom_context_menu(event)
+
+
+
+
+
+
+
+
+
+class UiElement(QtGui.QWidget):
+
+    # =====================================================
+    #   ADD LAYOUT
+    # =====================================================
+    @classmethod
+    def add_layout(self, parent, vec='V', typeLayer='set'):
+
+        if vec == 'V':
+            layout = QtGui.QVBoxLayout()
+        else:
+            layout = QtGui.QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+
+        if typeLayer == 'set':
+            parent.setLayout(layout)
+        elif typeLayer == 'add':
+            parent.addLayout(layout)
+
+        return layout
+
+
+    # =====================================================
+    # Text Field
+    # =====================================================
+    @classmethod
+    def textField(cls, labelName, parent, widthHeight, spacing=0, margin=(0, 0, 0, 0), vector='V'):
+
+        LA_Box = cls.add_layout(parent, vector, 'add')
+        LA_Box.setContentsMargins(margin[0], margin[1], margin[2], margin[3])
+
+
+        TX_Layout = []
+        for index, name in enumerate(labelName):
+
+            bigbox = cls.add_layout(LA_Box, 'H', 'add')
+            bigbox.setSpacing(spacing)
+
+
+            if name != '':
+                LA_Layout = QtGui.QLabel()
+                LA_Layout.setText(name)
+                LA_Layout.setAlignment(QtCore.Qt.AlignVCenter | QtCore.Qt.AlignLeft)
+
+                if widthHeight[index][0] > 0:
+                    LA_Layout.setFixedWidth(widthHeight[index][0])
+                if widthHeight[index][2] > 0:
+                    LA_Layout.setFixedHeight(widthHeight[index][2])
+
+                bigbox.addWidget(LA_Layout)
+
+
+            TX_Layout.append(QtGui.QLineEdit())
+            TX_Layout[index].setAlignment(QtCore.Qt.AlignVCenter | QtCore.Qt.AlignLeft)
+
+            bigbox.addWidget(TX_Layout[index])
+
+
+            if widthHeight[index][1] > 0:
+                TX_Layout[index].setFixedWidth(widthHeight[index][1])
+            if widthHeight[index][2] > 0:
+                TX_Layout[index].setFixedHeight(widthHeight[index][2])
+
+
+        return TX_Layout
+
+
+    # =====================================================
+    # Button
+    # =====================================================
+    @classmethod
+    def button(cls, **kwargs):
+
+        #    Variables
+        all_BU_Layout = []
+
+        parent = kwargs.get('parent')
+        labelName = kwargs.get('labelName')
+        color = kwargs.get('color', None)
+
+        widthHeight = kwargs.get('widthHeight', (0, 0))
+        spacing = kwargs.get('spacing', 0)
+        margin = kwargs.get('margin', (0, 0, 0, 0))
+        flat = kwargs.get('flat', False)
+
+        vector = kwargs.get('vector', 'V')
+
+        icons = kwargs.get('icons')
+
+
+        #    boxLayout
+        if vector == 'H':
+            BU_Box = QtGui.QHBoxLayout()
+        elif vector == 'V':
+            BU_Box = QtGui.QVBoxLayout()
+
+        BU_Box.setContentsMargins(margin[0], margin[1], margin[2], margin[3])
+        BU_Box.setSpacing(spacing)
+
+        parent.addLayout(BU_Box)
+
+
+        #    Button
+        for index, name in enumerate(labelName):
+
+            #    Button Layout
+            BU_Layout = Button()
+            BU_Layout.setText(name)
+            if flat is True:
+                BU_Layout.setFlat(True)
+
+            if widthHeight[index][1] > 0:
+                BU_Layout.setFixedHeight(widthHeight[index][1])
+            if widthHeight[index][0] > 0:
+                BU_Layout.setFixedWidth(widthHeight[index][0])
+
+            BU_Box.addWidget(BU_Layout)
+
+            if icons is not None:
+
+                iconPath = QtGui.QIcon(icons[index])
+                BU_Layout.setIcon(iconPath)
+                BU_Layout.setIconSize(QtCore.QSize(widthHeight[index][1] - 4, widthHeight[index][1] - 4))
+
+            if color is not None:
+                r = color[index][0]
+                g = color[index][1]
+                b = color[index][2]
+                BU_Layout.setStyleSheet('background-color: rgb(%s, %s, %s)' % (r, g, b))
+
+            #    Externalised variables
+            all_BU_Layout.append(BU_Layout)
+
+        return all_BU_Layout
