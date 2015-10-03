@@ -40,8 +40,6 @@ from shiboken import wrapInstance
 from PySide import QtGui, QtCore
 from maya.OpenMayaUI import MQtUtil
 
-from qdTools.qdAnimation.qdTestTools.divers_tools import decorator
-
 
 
 
@@ -59,7 +57,6 @@ class Plugin_Manager():
 
     #    Delete Modules
     @classmethod
-    @decorator.giveTime
     def modules_delete(cls, modulesSurch=['qdTools', 'qdHelpers'], exception=['plugin_manager', 'AssetImporter']):
 
         import sys
@@ -89,7 +86,6 @@ class Plugin_Manager():
 
     #    Delete Modules
     @classmethod
-    @decorator.giveTime
     def modules_load(cls, path):
 
         import sys, os
@@ -116,7 +112,6 @@ class Plugin_Manager():
 
     #----- close all window
     @classmethod
-    @decorator.giveTime
     def window_close_all_pyside(cls):
         
         MAYA_WINDOW = wrapInstance(long(MQtUtil.mainWindow()), QtCore.QObject)
@@ -129,7 +124,6 @@ class Plugin_Manager():
 
     #----- close all window
     @classmethod
-    @decorator.giveTime
     def print_modules(cls, modulesSurch):
 
         import sys

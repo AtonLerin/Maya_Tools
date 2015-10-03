@@ -167,7 +167,7 @@ class AssetImporter(QtGui.QWidget):
             parent=surchLayout,
             labelName=[''],
             widthHeight=[(20, 20)],
-            icons=[os.path.join(ICON_PATH, 'window_close.png')],
+            icons=[os.path.join(self.ICON_PATH, 'window_close.png')],
             margin=(0, 0, 0, 0),
         )
 
