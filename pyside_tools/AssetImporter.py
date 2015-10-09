@@ -2,11 +2,13 @@
 # # My input for launch this tool is Ctrl+&
 # # 
 # # it's easy to add file extension
-# # extension_accepted = ['.ma', '.mb', '.fbx', '.obj'] in line 458
+# # accepted = ['.ma', '.mb', '.fbx', '.obj'] in line 458
 # #
-# # This tools surch all scenes folder in yout path
+# # This tools surch all files folder in your path and children folder path
 # # give name of your asset in text field and press down arrow for go to the list
-# # ESC to return in text field. ESC again for exit ui
+# # Press up in the first index list for return in your text field or press ESCAP
+# # Press ESCAP in the text field for exit ui
+# #
 # # F1 on asset for load
 # # F2 on asset for import in reference
 # # F3 on asset for import in scene with no namespace
@@ -26,7 +28,6 @@
 # cao_window = AssetImporter()
 # cao_window.show()
 
-
 # =========================================================
 #   Import Module
 # =========================================================
@@ -38,22 +39,12 @@ from PySide import QtGui, QtCore
 from ctypes import Structure, c_ulong
 
 
-
-
-
-
-
-
-
 # =========================================================
 #   Mouse Tool
 # =========================================================
 
-
-
 class Mouse_Position(Structure):
     _fields_ = [("x", c_ulong), ("y", c_ulong)]
-
 
 #    Mouse Tools
 class Mouse_Tools():
@@ -69,21 +60,9 @@ class Mouse_Tools():
         return { "x": position.x, "y": position.y}
 
 
-
-
-
-
-
-
-
-
-
-
-
 # =========================================================
 #    Asset Importer
 # =========================================================
-
 
 
 class AssetImporter(QtGui.QWidget):
@@ -113,7 +92,6 @@ class AssetImporter(QtGui.QWidget):
 
         self.treeFocus = False
 
-
         #   Set Window
         self.setWindowFlags(QtCore.Qt.FramelessWindowHint)
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
@@ -141,12 +119,10 @@ class AssetImporter(QtGui.QWidget):
         container.addStretch(1)
         self.setLayout(container)
 
-
         #   Surch Layout
         surchLayout = QtGui.QHBoxLayout()
         surchLayout.setContentsMargins(0,0,0,0)
         surchWidget.setLayout(surchLayout)
-
 
         #   LineEdit
         self.TX_label = UiElement.textField(
@@ -161,7 +137,6 @@ class AssetImporter(QtGui.QWidget):
         self.TX_label[0].textChanged.connect(self.textChanged_Action)
         self.TX_label[0].returnPressed.connect(self.returnPressed_Action)
 
-
         #   Button
         self.BU_Layout = UiElement.button(
             parent=surchLayout,
@@ -175,15 +150,10 @@ class AssetImporter(QtGui.QWidget):
 
         self.BU_Layout[0].clicked.connect(self.closeWindow_Action)
 
-
-
-
-
         #   Tree Layout
         treeLayout = QtGui.QVBoxLayout()
         treeLayout.setContentsMargins(0,0,0,0)
         treeWidget.setLayout(treeLayout)
-
 
         #   Tree View
         self.view = QtGui.QListView()
@@ -201,18 +171,8 @@ class AssetImporter(QtGui.QWidget):
             "border-radius: 0px;"
         )
 
-
-
-
-
         #   Get Asset
         self.get_files(path=self.PATH)
-
-
-
-
-
-
 
 
     # =====================================================
@@ -237,13 +197,6 @@ class AssetImporter(QtGui.QWidget):
             extensions = [extensions]
 
         cls.EXTENSION_ACCEPTED = extensions
-
-
-
-
-
-
-
 
 
     # =====================================================
@@ -361,15 +314,6 @@ class AssetImporter(QtGui.QWidget):
             self.close()
 
 
-
-
-
-
-
-
-
-
-
     # =====================================================
     #   If text change
     # =====================================================
@@ -425,13 +369,6 @@ class AssetImporter(QtGui.QWidget):
         self.view.setFixedHeight(size)
 
 
-
-
-
-
-
-
-
     # =====================================================
     #   If return is pressed
     # =====================================================
@@ -453,41 +390,41 @@ class AssetImporter(QtGui.QWidget):
         self.close()
 
 
-
-
-
-
-
-
-
     # =====================================================
     #   get_scripts
     # =====================================================
     def get_files(self, path=None):
     
-        self.__items = []
+        items_path = []
+        exceptions = ['.swatches', '.mayaSwatches']
+        accepted = ['.ma', '.mb', '.fbx', '.obj']
 
+        if not isinstance(path, (list, tuple)):
+            path = [path]
 
-        for p in path:
+        for pathObject in path:
 
-            if not os.path.exists(p):
+            if not os.path.exists(pathObject):
                 continue
 
-            for fileName in os.listdir(p):
-                self.__items.append(fileName)
+            for fileName in os.listdir(pathObject):
+                items_path.append(os.path.join(pathObject, fileName))
 
 
-            for item in self.__items:
+        for item_path in items_path:
 
-                pathItem = os.path.join(p, item)
-                if not [x for x in ['.swatches', '.mayaSwatches'] if x in pathItem]:
-                    if os.path.isfile(pathItem):
-                        if [ext for ext in self.EXTENSION_ACCEPTED if ext in pathItem]:
-                            self.FILES_ALL.append(pathItem)
+            if os.path.isfile(item_path):
 
+                if [x for x in exceptions if x in item_path]:
+                    continue
 
-                    if os.path.isdir(pathItem):
-                        self.get_files(path=[pathItem])
+                if not [ext for ext in accepted if ext in item_path]:
+                    continue
+
+                self.FILES_ALL.append(item_path)
+
+            if os.path.isdir(item_path):
+                self.get_files(path=item_path)
 
 
     # =====================================================
@@ -502,18 +439,9 @@ class AssetImporter(QtGui.QWidget):
         return os.path.normpath(file_path), fileName, fileExtension
 
 
-
-
-
-
-
-
-
 # =========================================================
 #    PySide Tools
 # =========================================================
-
-
 
 class Button(QtGui.QPushButton):
 
@@ -529,14 +457,6 @@ class Button(QtGui.QPushButton):
 
         if self.custom_context_menu is not None:
             self.custom_context_menu(event)
-
-
-
-
-
-
-
-
 
 class UiElement(QtGui.QWidget):
 
