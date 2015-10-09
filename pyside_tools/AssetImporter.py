@@ -1,8 +1,7 @@
 # # Put this script in the maya hotkey
 # # My input for launch this tool is Ctrl+&
 # # 
-# # it's easy to add file extension
-# # accepted = ['.ma', '.mb', '.fbx', '.obj'] in line 458
+# # it's easy to add file extension or exceptions files
 # #
 # # This tools surch all files folder in your path and children folder path
 # # give name of your asset in text field and press down arrow for go to the list
@@ -10,8 +9,12 @@
 # # Press ESCAP in the text field for exit ui
 # #
 # # F1 on asset for load
-# # F2 on asset for import in reference
+# # F2 or ENTER on asset for import in reference
 # # F3 on asset for import in scene with no namespace
+# # F4 for open explorer window with this path
+# #
+# # If you want a custom namespace
+# # in text files HODOR:your_file_name
 
 # p = r'I:\Work\Maya'
 # sys.path.insert(0, p)
@@ -21,12 +24,16 @@
 
 # from AssetImporter import AssetImporter
 
-# AssetImporter.set_path([r'D:\CHARACTER',])
-# AssetImporter.set_icon_path(r'I:\Work\Maya\icons')
+# AssetImporter.set_path([r'D:\Work\Maya',])
+# AssetImporter.set_icon_path(r'D:\Work\Maya\icons')
 # AssetImporter.set_extension_accepted(['.ma', '.mb', '.fbx', '.obj'])
+# # AssetImporter.get_extension_accepted()
+# AssetImporter.set_exceptions(['.swatches', '.mayaSwatches'])
+# # AssetImporter.get_exceptions()
 
 # cao_window = AssetImporter()
 # cao_window.show()
+
 
 # =========================================================
 #   Import Module
@@ -69,11 +76,15 @@ class AssetImporter(QtGui.QWidget):
     
 
     #       Class Variables
-    PATH = [] # exemple : ['D:/Work/scenes/', 'D:/BASE/CHARACTER']
-    ICON_PATH = ''
-    FILES_ALL = []
+    PATH = []
+    ALL_FILES = []
     FILES_SURCH = []
+
+    ICON_PATH = ''
     EXTENSION_ACCEPTED = ['.ma', '.mb', '.fbx', '.obj']
+    EXCEPTIONS = ['.swatches', '.mayaSwatches']
+
+    PATH_ROLE = QtCore.Qt.UserRole
 
 
     # =====================================================
@@ -198,6 +209,22 @@ class AssetImporter(QtGui.QWidget):
 
         cls.EXTENSION_ACCEPTED = extensions
 
+    @classmethod
+    def get_extension_accepted(cls):
+        return self.EXTENSION_ACCEPTED
+
+    @classmethod
+    def set_exceptions(cls, exceptions):
+
+        if isinstance(exceptions, basestring):
+            exceptions = [exceptions]
+
+        cls.EXCEPTIONS = exceptions
+
+    @classmethod
+    def get_exceptions(cls):
+        return cls.EXCEPTIONS
+
 
     # =====================================================
     #   Build Rectangle
@@ -248,12 +275,11 @@ class AssetImporter(QtGui.QWidget):
             'F1': 16777264,
             'F2': 16777265,
             'F3': 16777266,
+            'F4': 16777267,
         }
-
 
         #   if echap is pressed
         if key == QtCore.Qt.Key_Escape:
-
             if self.treeFocus is True:
                 self.treeFocus = False
                 self.TX_label[0].setFocus()
@@ -265,53 +291,47 @@ class AssetImporter(QtGui.QWidget):
 
             #   Get Asset in table
             index = self.view.currentIndex()
-            item = self.model.itemFromIndex(index).row()
-            filePath = self.FILES_SURCH[item]
+            index_datas = index.data(self.PATH_ROLE)
 
-            fPath, fName, fExt = self.pathSplit(filePath)
+            namespace = index_datas['NAMESPACE']
+            file_path = index_datas['PATH']
+
+            f_path, f_name, f_ext = self.pathSplit(file_path)
+            if not namespace:
+                namespace = f_name
+
+            print '#\tNAMESPACE --> %s' % namespace
+            print '#\tFILE PATH --> %s' % file_path
 
             if key == key_value['F1']:
-
                 pmc.newFile(force=True)
-                pmc.system.openFile(filePath, force=True)
+                pmc.system.openFile(file_path, force=True)
 
-                pmc.workspace(fPath, o=True)
-                pmc.workspace(dir=fPath)
+                pmc.workspace(file_path, o=True)
+                pmc.workspace(dir=file_path)
 
-
-            if key == key_value['F2']:
-
-                pmc.createReference(filePath, namespace=fName.upper())
-
+            if key == key_value['F2'] or key == key_value['enterKey']:
+                pmc.createReference(file_path, namespace=namespace)
 
             if key == key_value['F3']:
+                pmc.importFile(file_path)
 
-                pmc.importFile(filePath)
+            if key == key_value['F4']:
+                self.open_explorer(file_path)                
 
-
-        #   If down arrow is pressed
-        if key == key_value['goDownKey'] and self.treeFocus is False:
-            self.returnPressed_Action()
-
-
-        #   IF up arrow is pressed
-        if key == key_value['goUpKey'] and self.treeFocus is True:
-
-            index = self.view.currentIndex()
-            if index.row() == 0:
-                self.TX_label[0].setFocus()
-                self.treeFocus = False
-
-
-        #   If enter is pressed
-        if key == key_value['enterKey'] and self.treeFocus is True:
-
-            path, fileName = os.path.split(filePath)
-            ns = fileName.split('.')[0]
-
-            pmc.createReference(filePath, namespace=ns)
+            if key == key_value['goUpKey']:
+                index = self.view.currentIndex()
 
             self.close()
+
+        else:
+
+            if key == key_value['goDownKey']:
+                self.returnPressed_Action()
+
+            if key == key_value['goUpKey'] and index.row() == 0:
+                self.TX_label[0].setFocus()
+                self.treeFocus = False
 
 
     # =====================================================
@@ -319,52 +339,65 @@ class AssetImporter(QtGui.QWidget):
     # =====================================================
     def textChanged_Action(self):
 
-        #----- Variables
-        text_surch = self.TX_label[0].text()
+        #    Variables
+        text_field = self.TX_label[0].text()
+        text_surch_split = text_field.split(':')
+        
+        namespace = ''
+        if len(text_surch_split) > 1:
+            namespace = text_surch_split[0]
+        text_surch = text_surch_split[-1]
+
         self.FILES_SURCH = []
+
         ligneChange = 0
 
 
-        #----- Surch scripts
+        #    Surch scripts
         self.model.clear()
-        for asset in self.FILES_ALL:
+        for asset_name in self.ALL_FILES:
 
-            filePath, fileName = os.path.split(asset)
-            if text_surch in fileName:
+            file_path, file_name, file_ext = self.pathSplit(asset_name)
 
-                if not asset in self.FILES_SURCH:
-                    self.FILES_SURCH.append(asset)
+            datas = {'PATH': asset_name, 'NAMESPACE': namespace}
+
+            if text_surch not in file_name:
+                continue
+
+            #   Add asset to list
+            if not asset_name in self.FILES_SURCH:
+                self.FILES_SURCH.append(asset_name)
+
+            #   Check extension
+            if '.ma' in file_ext or '.mb' in file_ext:
+                iconName = 'maya.png'
+            elif '.fbx' in file_ext:
+                iconName = 'fbx.png'
+            elif '.fbx' in file_ext:
+                iconName = 'obj.png'
+
+            #   Background color
+            psColor = QtGui.QColor(40, 40, 40)
+            if ligneChange == 1:
+                psColor = QtGui.QColor(50, 50, 50)
+
+            psColor.setAlpha(230)
+
+            ligneChange = 1 - ligneChange
+
+            #   Set item
+            icon = QtGui.QIcon(os.path.join(self.ICON_PATH, iconName))
+
+            standardItem = QtGui.QStandardItem(icon, file_name)
+            standardItem.setBackground(QtGui.QBrush(psColor))
+            standardItem.setEditable(False)
+            standardItem.setSizeHint(QtCore.QSize(0, 30))
+            standardItem.setData(datas, self.PATH_ROLE)
+
+            self.model.appendRow(standardItem)
 
 
-                if '.ma' in fileName or '.mb' in fileName:
-                    iconName = 'maya.png'
-                elif '.fbx' in fileName:
-                    iconName = 'fbx.png'
-                elif '.fbx' in fileName:
-                    iconName = 'obj.png'
-
-                icon = QtGui.QIcon()
-                if os.path.exists(self.ICON_PATH):
-                    icon = QtGui.QIcon(os.path.join(self.ICON_PATH, iconName))
-
-
-                standardItem = QtGui.QStandardItem(icon, fileName)
-
-
-                psColor = QtGui.QColor(40, 40, 40)
-                if ligneChange == 1:
-                    psColor = QtGui.QColor(50, 50, 50)
-                psColor.setAlpha(230)
-                ligneChange = 1 - ligneChange
-
-
-                standardItem.setBackground(QtGui.QBrush(psColor))
-                standardItem.setEditable(False)
-                standardItem.setSizeHint(QtCore.QSize(0, 30))
-                self.model.appendRow(standardItem)
-
-
-        #----- TreeView 
+        #    TreeView
         size = 30 * len(self.FILES_SURCH)
         self.view.setFixedHeight(size)
 
@@ -421,7 +454,7 @@ class AssetImporter(QtGui.QWidget):
                 if not [ext for ext in accepted if ext in item_path]:
                     continue
 
-                self.FILES_ALL.append(item_path)
+                self.ALL_FILES.append(item_path)
 
             if os.path.isdir(item_path):
                 self.get_files(path=item_path)
@@ -430,13 +463,28 @@ class AssetImporter(QtGui.QWidget):
     # =====================================================
     #   Path Split
     # =====================================================
-    @classmethod
-    def pathSplit(cls, file_path):
+    @staticmethod
+    def pathSplit(file_path):
 
         file_path, fileFullName = os.path.split(file_path)
         fileName, fileExtension = os.path.splitext(fileFullName)
 
         return os.path.normpath(file_path), fileName, fileExtension
+
+    # =====================================================
+    #   Open Explorer
+    # =====================================================
+    @staticmethod
+    def open_explorer(path):
+
+        if not os.path.exists(path) or path == '':
+            return
+
+        selectFile = ''
+        if os.path.isfile(path):
+            selectFile = '/select,'
+
+        subprocess.Popen('explorer %s%s' % (selectFile, path))
 
 
 # =========================================================
