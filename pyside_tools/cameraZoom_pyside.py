@@ -61,11 +61,11 @@ class cameraOverShoot(QtGui.QMainWindow):
 
         #    Button
         camera_button = UiElement.button(
-            master_layout, ['Load Camera', 'reset_camera'], [(0, 40), ] * 3,
+            master_layout, ['Load Camera', 'Take Picture', 'Reset Camera'], [(0, 40), ] * 3,
             margin=(5, 5, 5, 5), spacing=3, vector='H'
         )
 
-        for button, action in zip(camera_button, [self.load_camera, self.reset_camera]):
+        for button, action in zip(camera_button, [self.load_camera, self.take_picture, self.reset_camera]):
             button.clicked.connect(action)
 
         #    Scene Widget
@@ -81,9 +81,9 @@ class cameraOverShoot(QtGui.QMainWindow):
         self.square.mouseRightRelease.connect(self.mouseRightRelease)
 
     #    Draw background
-    def draw_background(self, camera_node, scale_image=0.5):
+    def draw_background(self, camera_node=None, panel_node=None, scale_image=0.5):
 
-        picture = self.capture_camera()
+        picture = self.capture_camera(camera_node, panel_node)
 
         self.WIDTH = picture.size().width() * scale_image
         self.HEIGHT = picture.size().height() * scale_image
@@ -151,8 +151,8 @@ class cameraOverShoot(QtGui.QMainWindow):
         if panel_node is None:
             panel_node = self.get_selected_panel()
 
-        self.set_camera_background(camera_node, panel_node)
         self.reset_camera()
+        self.set_camera_background(camera_node, panel_node)
 
     def reset_camera(self):
 
@@ -160,6 +160,15 @@ class cameraOverShoot(QtGui.QMainWindow):
 
         self.reset_camera_data(camera_node)
         self.reset_square_data()
+
+    def take_picture(self, camera_node=None, panel_node=None):
+
+        if camera_node is None:
+            camera_node = self.get_selected_camera()
+        if panel_node is None:
+            panel_node = self.get_selected_panel()
+
+        self.set_camera_background(camera_node, panel_node)
 
 
     # ===============================================
@@ -183,13 +192,39 @@ class cameraOverShoot(QtGui.QMainWindow):
     def get_all_camera():
         return [x.getParent().name() for x in pmc.ls(type='camera')]
 
+    #   Get Size of maya render
+    @staticmethod
+    def get_renderglobals_size():
+
+        renderGlobals = pmc.PyNode('defaultRenderGlobals')
+        renderGlobals_resolution = renderGlobals.resolution.inputs()[0]
+        w = renderGlobals_resolution.width.get()
+        h = renderGlobals_resolution.height.get()
+
+        return w, h
+
     #   Caputre by camera node
-    def capture_camera(self):
+    def capture_camera(self, camera_node=None, panel_node=None, with_render_settings=False):
 
-        camera_node = self.get_selected_camera()
-        panel_node = self.get_selected_panel()
+        if camera_node is None:
+            camera_node = self.get_selected_camera()
+        if panel_node is None:
+            panel_node = self.get_selected_panel()
 
-        return CameraCapture.viewportCapture(camera_node, panel_node)[0]
+        if with_render_settings:
+            w, h = self.get_renderglobals_size()
+        else:
+            w, h = 1920, 1200
+
+        if w < 480 or h < 300:
+            w *= 4
+            h *= 4
+
+        if w > 1000 or h > 1000:
+            w /= 2
+            h /= 2
+
+        return CameraCapture.viewportCapture(camera_node, panel_node, width=w, height=h)[0]
 
     #    Camera
     def get_selected_camera(self):
